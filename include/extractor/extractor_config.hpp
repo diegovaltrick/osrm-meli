@@ -63,6 +63,7 @@ struct ExtractorConfig final : storage::IOConfig
                ".osrm.fileIndex",
                ".osrm.turn_duration_penalties",
                ".osrm.turn_weight_penalties",
+               ".osrm.turn_crosses_penalties", // LRQ
                ".osrm.turn_penalties_index",
                ".osrm.enw",
                ".osrm.properties",

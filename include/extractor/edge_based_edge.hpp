@@ -35,6 +35,7 @@ struct EdgeBasedEdge
         EdgeWeight weight;
         EdgeDistance distance;
         EdgeWeight duration : 30;
+        int crosstype;
         std::uint32_t forward : 1;
         std::uint32_t backward : 1;
 
@@ -59,7 +60,7 @@ struct EdgeBasedEdge
     NodeID target;
     EdgeData data;
 };
-static_assert(sizeof(extractor::EdgeBasedEdge) == 24,
+static_assert(sizeof(extractor::EdgeBasedEdge) == 32,
               "Size of extractor::EdgeBasedEdge type is "
               "bigger than expected. This will influence "
               "memory consumption.");

@@ -781,7 +781,9 @@ void Sol2ScriptingEnvironment::InitContext(LuaScriptingContext &context)
             "weight",
             &ExtractionTurn::weight,
             "duration",
-            &ExtractionTurn::duration);
+            &ExtractionTurn::duration,
+            "crosstype",
+            &ExtractionTurn::crosstype);//LRQ
         initV2Context();
         break;
     }

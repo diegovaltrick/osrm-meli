@@ -84,8 +84,9 @@ Status TablePlugin::HandleRequest(const RoutingAlgorithmsInterface &algorithms,
     bool request_distance = params.annotations & api::TableParameters::AnnotationsType::Distance;
     bool request_duration = params.annotations & api::TableParameters::AnnotationsType::Duration;
 
-    auto result_tables_pair = algorithms.ManyToManySearch(
+    auto complete_result = algorithms.ManyToManySearch(
         snapped_phantoms, params.sources, params.destinations, request_distance);
+    auto result_tables_pair = complete_result.first;
 
     if ((request_duration && result_tables_pair.first.empty()) ||
         (request_distance && result_tables_pair.second.empty()))
@@ -152,7 +153,8 @@ Status TablePlugin::HandleRequest(const RoutingAlgorithmsInterface &algorithms,
     }
 
     api::TableAPI table_api{facade, params};
-    table_api.MakeResponse(result_tables_pair, snapped_phantoms, estimated_pairs, result);
+    table_api.MakeResponse(
+        result_tables_pair, complete_result.second, snapped_phantoms, estimated_pairs, result);
 
     return Status::Ok;
 }

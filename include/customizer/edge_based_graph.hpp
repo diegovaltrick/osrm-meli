@@ -99,6 +99,8 @@ class MultiLevelGraph : public partitioner::MultiLevelGraph<EdgeDataT, Ownership
 
     EdgeWeight GetNodeDuration(NodeID node) const { return node_durations[node]; }
 
+    int GetNodeCrossess(NodeID node) const { return node_crosses[node]; }
+
     EdgeDistance GetNodeDistance(NodeID node) const { return node_distances[node]; }
 
     bool IsForwardEdge(EdgeID edge) const { return is_forward_edge[edge]; }
@@ -120,6 +122,7 @@ class MultiLevelGraph : public partitioner::MultiLevelGraph<EdgeDataT, Ownership
     Vector<EdgeDistance> node_distances;
     Vector<bool> is_forward_edge;
     Vector<bool> is_backward_edge;
+    Vector<int> node_crosses;
 };
 
 using MultiLevelEdgeBasedGraph =

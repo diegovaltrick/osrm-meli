@@ -217,7 +217,7 @@ endif()
 # non-debug build, which almost nobody wants.
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type specified, defaulting to Release")
-  set(CMAKE_BUILD_TYPE Release)
+  set(CMAKE_BUILD_TYPE Debug)
 endif()
 
 if(CMAKE_BUILD_TYPE MATCHES Debug)

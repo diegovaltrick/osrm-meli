@@ -389,6 +389,27 @@ inline void writeTurnDurationPenalty(const boost::filesystem::path &path,
     storage::serialization::write(writer, "/common/turn_penalty/duration", turn_penalty);
 }
 
+// LRQ LOGISTICS ROUTING QUALITY
+template <typename TurnPenaltyT>
+inline void readTurnCrossesPenalty(const boost::filesystem::path &path, TurnPenaltyT &turn_penalty)
+{
+    const auto fingerprint = storage::tar::FileReader::VerifyFingerprint;
+    storage::tar::FileReader reader{path, fingerprint};
+
+    storage::serialization::read(reader, "/common/turn_penalty/crosses", turn_penalty);
+}
+
+template <typename TurnPenaltyT>
+inline void writeTurnCrossesPenalty(const boost::filesystem::path &path,
+                                    const TurnPenaltyT &turn_penalty)
+{
+    const auto fingerprint = storage::tar::FileWriter::GenerateFingerprint;
+    storage::tar::FileWriter writer{path, fingerprint};
+
+    storage::serialization::write(writer, "/common/turn_penalty/crosses", turn_penalty);
+}
+// END
+
 // read .osrm.turn_weight_penalties
 template <typename TurnPenaltyT>
 inline void readTurnDurationPenalty(const boost::filesystem::path &path, TurnPenaltyT &turn_penalty)

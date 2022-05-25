@@ -91,6 +91,7 @@ class BaseDataFacade
     virtual TurnPenalty GetWeightPenaltyForEdgeID(const EdgeID id) const = 0;
 
     virtual TurnPenalty GetDurationPenaltyForEdgeID(const EdgeID id) const = 0;
+    virtual TurnPenalty GetCrosstypeForEdgeID(const EdgeID id) const = 0;
 
     // Gets the weight values for each segment in an uncompressed geometry.
     // Should always be 1 shorter than GetUncompressedGeometry

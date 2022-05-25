@@ -144,6 +144,7 @@ class ContiguousInternalMemoryDataFacadeBase : public BaseDataFacade
     util::vector_view<extractor::TurnLaneType::Mask> m_lane_description_masks;
     util::vector_view<TurnPenalty> m_turn_weight_penalties;
     util::vector_view<TurnPenalty> m_turn_duration_penalties;
+    util::vector_view<TurnPenalty> m_turn_crosses_penalties; // LRQ
     extractor::SegmentDataView segment_data;
     extractor::EdgeBasedNodeDataView edge_based_node_data;
     guidance::TurnDataView turn_data;
@@ -205,6 +206,7 @@ class ContiguousInternalMemoryDataFacadeBase : public BaseDataFacade
 
         m_turn_weight_penalties = make_turn_weight_view(index, "/common/turn_penalty");
         m_turn_duration_penalties = make_turn_duration_view(index, "/common/turn_penalty");
+        m_turn_crosses_penalties = make_turn_crosses_view(index, "/common/turn_penalty");
 
         segment_data = make_segment_data_view(index, "/common/segment_data");
 
@@ -295,6 +297,12 @@ class ContiguousInternalMemoryDataFacadeBase : public BaseDataFacade
     {
         BOOST_ASSERT(m_turn_duration_penalties.size() > id);
         return m_turn_duration_penalties[id];
+    }
+
+    TurnPenalty GetCrosstypeForEdgeID(const EdgeID id) const override final // LRQ
+    {
+        BOOST_ASSERT(m_turn_crosses_penalties.size() > id);
+        return m_turn_crosses_penalties[id];
     }
 
     osrm::guidance::TurnInstruction

@@ -419,6 +419,7 @@ updateTurnPenalties(const UpdaterConfig &config,
                     const TurnLookupTable &turn_penalty_lookup,
                     std::vector<TurnPenalty> &turn_weight_penalties,
                     std::vector<TurnPenalty> &turn_duration_penalties,
+                    std::vector<TurnPenalty> &turn_crosses_penalties,
                     extractor::PackedOSMIDs osm_node_ids)
 {
     const auto weight_multiplier = profile_properties.GetWeightMultiplier();
@@ -449,6 +450,7 @@ updateTurnPenalties(const UpdaterConfig &config,
         // original turn weight/duration values
         auto turn_weight_penalty = turn_weight_penalties[edge_index];
         auto turn_duration_penalty = turn_duration_penalties[edge_index];
+        auto turn_crosses_penalty = turn_crosses_penalties[edge_index];
 
         if (auto value = turn_penalty_lookup(osm_turn))
         {
@@ -459,6 +461,7 @@ updateTurnPenalties(const UpdaterConfig &config,
                                              : turn_duration_penalty * weight_multiplier / 10.));
 
             turn_duration_penalties[edge_index] = turn_duration_penalty;
+            turn_crosses_penalties[edge_index] = turn_crosses_penalty;
             turn_weight_penalties[edge_index] = turn_weight_penalty;
             updated_turns.push_back(edge_index);
         }
@@ -571,6 +574,7 @@ Updater::LoadAndUpdateEdgeExpandedGraph(std::vector<extractor::EdgeBasedEdge> &e
     extractor::ProfileProperties profile_properties;
     std::vector<TurnPenalty> turn_weight_penalties;
     std::vector<TurnPenalty> turn_duration_penalties;
+    std::vector<TurnPenalty> turn_crosses_penalties;
     if (update_edge_weights || update_turn_penalties || update_conditional_turns)
     {
         tbb::parallel_invoke(
@@ -586,6 +590,10 @@ Updater::LoadAndUpdateEdgeExpandedGraph(std::vector<extractor::EdgeBasedEdge> &e
             [&] {
                 extractor::files::readTurnDurationPenalty(
                     config.GetPath(".osrm.turn_duration_penalties"), turn_duration_penalties);
+            },
+            [&] {
+                extractor::files::readTurnCrossesPenalty(
+                    config.GetPath(".osrm.turn_crosses_penalties"), turn_crosses_penalties); // LRQ
             },
             [&] {
                 extractor::files::readProfileProperties(config.GetPath(".osrm.properties"),
@@ -626,6 +634,7 @@ Updater::LoadAndUpdateEdgeExpandedGraph(std::vector<extractor::EdgeBasedEdge> &e
                                                           turn_penalty_lookup,
                                                           turn_weight_penalties,
                                                           turn_duration_penalties,
+                                                          turn_crosses_penalties,
                                                           osm_node_ids);
         const auto offset = updated_segments.size();
         updated_segments.resize(offset + updated_turn_penalties.size());
@@ -759,6 +768,7 @@ Updater::LoadAndUpdateEdgeExpandedGraph(std::vector<extractor::EdgeBasedEdge> &e
             // Get the turn penalty and update to the new value if required
             auto turn_weight_penalty = turn_weight_penalties[edge.data.turn_id];
             auto turn_duration_penalty = turn_duration_penalties[edge.data.turn_id];
+            auto turn_crosses_penalty = turn_crosses_penalties[edge.data.turn_id];
             const auto num_nodes = segment_data.GetForwardGeometry(geometry_id.id).size();
             const auto weight_min_value = static_cast<EdgeWeight>(num_nodes);
             if (turn_weight_penalty + new_weight < weight_min_value)
@@ -780,6 +790,7 @@ Updater::LoadAndUpdateEdgeExpandedGraph(std::vector<extractor::EdgeBasedEdge> &e
             // Update edge weight
             edge.data.weight = new_weight + turn_weight_penalty;
             edge.data.duration = new_duration + turn_duration_penalty;
+            edge.data.crosstype = turn_crosses_penalty; // LRQ
         }
     };
 

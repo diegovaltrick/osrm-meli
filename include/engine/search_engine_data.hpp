@@ -31,8 +31,9 @@ struct ManyToManyHeapData : HeapData
 {
     EdgeWeight duration;
     EdgeDistance distance;
+    int crosses;
     ManyToManyHeapData(NodeID p, EdgeWeight duration, EdgeDistance distance)
-        : HeapData(p), duration(duration), distance(distance)
+        : HeapData(p), duration(duration), distance(distance), crosses(0)
     {
     }
 };
@@ -80,15 +81,29 @@ struct ManyToManyMultiLayerDijkstraHeapData : MultiLayerDijkstraHeapData
 {
     EdgeWeight duration;
     EdgeDistance distance;
+    int crosses; // LRQ
     ManyToManyMultiLayerDijkstraHeapData(NodeID p, EdgeWeight duration, EdgeDistance distance)
-        : MultiLayerDijkstraHeapData(p), duration(duration), distance(distance)
+        : MultiLayerDijkstraHeapData(p), duration(duration), distance(distance), crosses(0)
     {
     }
     ManyToManyMultiLayerDijkstraHeapData(NodeID p,
                                          bool from,
                                          EdgeWeight duration,
                                          EdgeDistance distance)
-        : MultiLayerDijkstraHeapData(p, from), duration(duration), distance(distance)
+        : MultiLayerDijkstraHeapData(p, from), duration(duration), distance(distance), crosses(0)
+    {
+    }
+    ManyToManyMultiLayerDijkstraHeapData(NodeID p,
+                                         EdgeWeight duration,
+                                         EdgeDistance distance,
+                                         int crosses)
+        : MultiLayerDijkstraHeapData(p), duration(duration), distance(distance), crosses(crosses)
+    {
+    }
+    ManyToManyMultiLayerDijkstraHeapData(
+        NodeID p, bool from, EdgeWeight duration, EdgeDistance distance, int crosses)
+        : MultiLayerDijkstraHeapData(p, from), duration(duration), distance(distance),
+          crosses(crosses)
     {
     }
 };

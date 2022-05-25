@@ -92,7 +92,7 @@ struct ExtractionTurn
           target_speed(target_speed), target_priority_class(target_priority_class),
 
           roads_on_the_right(roads_on_the_right), roads_on_the_left(roads_on_the_left), weight(0.),
-          duration(0.)
+          duration(0.), crosstype(0) // LRQ
 
     {
     }
@@ -129,6 +129,8 @@ struct ExtractionTurn
 
     double weight;
     double duration;
+
+    int crosstype; // LRQ
 };
 } // namespace extractor
 } // namespace osrm

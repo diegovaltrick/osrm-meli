@@ -737,6 +737,7 @@ EdgeID Extractor::BuildEdgeExpandedGraph(
         edge_based_graph_factory.Run(scripting_environment,
                                      config.GetPath(".osrm.turn_weight_penalties").string(),
                                      config.GetPath(".osrm.turn_duration_penalties").string(),
+                                     config.GetPath(".osrm.turn_crosses_penalties").string(), // LRQ
                                      config.GetPath(".osrm.turn_penalties_index").string(),
                                      config.GetPath(".osrm.cnbg_to_ebg").string(),
                                      config.GetPath(".osrm.restrictions").string(),

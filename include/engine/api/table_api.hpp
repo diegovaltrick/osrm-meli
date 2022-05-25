@@ -48,6 +48,7 @@ class TableAPI final : public BaseAPI
 
     virtual void
     MakeResponse(const std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>> &tables,
+                 const std::vector<int> &crosses,
                  const std::vector<PhantomNode> &phantoms,
                  const std::vector<TableCellRef> &fallback_speed_cells,
                  osrm::engine::api::ResultT &response) const
@@ -60,7 +61,7 @@ class TableAPI final : public BaseAPI
         else
         {
             auto &json_result = response.get<util::json::Object>();
-            MakeResponse(tables, phantoms, fallback_speed_cells, json_result);
+            MakeResponse(tables, crosses, phantoms, fallback_speed_cells, json_result);
         }
     }
 
@@ -168,6 +169,7 @@ class TableAPI final : public BaseAPI
 
     virtual void
     MakeResponse(const std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>> &tables,
+                 const std::vector<int> &crosses,
                  const std::vector<PhantomNode> &phantoms,
                  const std::vector<TableCellRef> &fallback_speed_cells,
                  util::json::Object &response) const
@@ -219,6 +221,9 @@ class TableAPI final : public BaseAPI
             response.values["distances"] =
                 MakeDistanceTable(tables.second, number_of_sources, number_of_destinations);
         }
+
+        response.values["crosses"] =
+            MakeCrossesTable(crosses, number_of_sources, number_of_destinations);
 
         if (parameters.fallback_speed != INVALID_FALLBACK_SPEED && parameters.fallback_speed > 0)
         {
@@ -357,6 +362,26 @@ class TableAPI final : public BaseAPI
                                // division by 10 because the duration is in deciseconds (10s)
                                return util::json::Value(util::json::Number(duration / 10.));
                            });
+            json_table.values.push_back(std::move(json_row));
+        }
+        return json_table;
+    }
+
+    virtual util::json::Array MakeCrossesTable(const std::vector<int> &values,
+                                               std::size_t number_of_rows,
+                                               std::size_t number_of_columns) const
+    {
+        util::json::Array json_table;
+        for (const auto row : util::irange<std::size_t>(0UL, number_of_rows))
+        {
+            util::json::Array json_row;
+            auto row_begin_iterator = values.begin() + (row * number_of_columns);
+            auto row_end_iterator = values.begin() + ((row + 1) * number_of_columns);
+            json_row.values.resize(number_of_columns);
+            std::transform(row_begin_iterator,
+                           row_end_iterator,
+                           json_row.values.begin(),
+                           [](const int it) { return util::json::Value(it); });
             json_table.values.push_back(std::move(json_row));
         }
         return json_table;

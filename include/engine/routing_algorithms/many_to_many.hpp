@@ -26,6 +26,7 @@ struct NodeBucket
     EdgeWeight weight;
     EdgeDuration duration;
     EdgeDistance distance;
+    int crosses;
 
     NodeBucket(NodeID middle_node,
                NodeID parent_node,
@@ -35,7 +36,8 @@ struct NodeBucket
                EdgeDuration duration,
                EdgeDistance distance)
         : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
-          from_clique_arc(from_clique_arc), weight(weight), duration(duration), distance(distance)
+          from_clique_arc(from_clique_arc), weight(weight), duration(duration), distance(distance),
+          crosses(0)
     {
     }
 
@@ -46,7 +48,34 @@ struct NodeBucket
                EdgeDuration duration,
                EdgeDistance distance)
         : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
-          from_clique_arc(false), weight(weight), duration(duration), distance(distance)
+          from_clique_arc(false), weight(weight), duration(duration), distance(distance), crosses(0)
+    {
+    }
+
+    NodeBucket(NodeID middle_node,
+               NodeID parent_node,
+               bool from_clique_arc,
+               unsigned column_index,
+               EdgeWeight weight,
+               EdgeDuration duration,
+               EdgeDistance distance,
+               int crosses)
+        : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
+          from_clique_arc(from_clique_arc), weight(weight), duration(duration), distance(distance),
+          crosses(crosses)
+    {
+    }
+
+    NodeBucket(NodeID middle_node,
+               NodeID parent_node,
+               unsigned column_index,
+               EdgeWeight weight,
+               EdgeDuration duration,
+               EdgeDistance distance,
+               int crosses)
+        : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
+          from_clique_arc(false), weight(weight), duration(duration), distance(distance),
+          crosses(crosses)
     {
     }
 
@@ -91,7 +120,7 @@ struct NodeBucket
 } // namespace
 
 template <typename Algorithm>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                  const DataFacade<Algorithm> &facade,
                  const std::vector<PhantomNode> &phantom_nodes,

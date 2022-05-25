@@ -35,7 +35,7 @@ struct NodeBasedEdgeData
                       extractor::NodeBasedEdgeClassification flags,
                       AnnotationID annotation_data)
         : weight(weight), duration(duration), distance(distance), geometry_id(geometry_id),
-          reversed(reversed), flags(flags), annotation_data(annotation_data)
+          reversed(reversed), flags(flags), annotation_data(annotation_data), crosstype(0)
     {
     }
 
@@ -46,6 +46,7 @@ struct NodeBasedEdgeData
     bool reversed : 1;
     extractor::NodeBasedEdgeClassification flags;
     AnnotationID annotation_data;
+    int crosstype; // LRQ
 };
 
 // Check if two edge data elements can be compressed into a single edge (i.e. match in terms of

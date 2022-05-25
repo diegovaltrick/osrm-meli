@@ -75,6 +75,7 @@ using NameID = std::uint32_t;
 using AnnotationID = std::uint32_t;
 using EdgeWeight = std::int32_t;
 using EdgeDuration = std::int32_t;
+using EdgeCross = std::int32_t; // LRQ
 using EdgeDistance = float;
 using SegmentWeight = std::uint32_t;
 using SegmentDuration = std::uint32_t;

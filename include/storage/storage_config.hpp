@@ -56,6 +56,7 @@ struct StorageConfig final : IOConfig
                     ".osrm.geometry",
                     ".osrm.turn_weight_penalties",
                     ".osrm.turn_duration_penalties",
+                    ".osrm.turn_crosses_penalties",
                     ".osrm.datasource_names",
                     ".osrm.names",
                     ".osrm.timestamp",
