@@ -42,6 +42,10 @@ namespace extractor
 
 struct ExtractorConfig final : storage::IOConfig
 {
+    /**
+     * @brief Configura extrator para reconhecer o arquivo de cruzamentos
+     * 
+     */
     ExtractorConfig() noexcept
         : IOConfig(
               {

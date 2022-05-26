@@ -20,6 +20,11 @@ namespace util
 
 struct NodeBasedEdgeData
 {
+    /**
+     * @brief Adiciona a propriedade crosstype ao objeto de base para os nós de intersecção
+     * e adicionado no construtor para inicializar zerado
+     * 
+     */
     NodeBasedEdgeData()
         : weight(INVALID_EDGE_WEIGHT), duration(INVALID_EDGE_WEIGHT),
           distance(INVALID_EDGE_DISTANCE), geometry_id({0, false}), reversed(false),

@@ -84,6 +84,13 @@ Status TablePlugin::HandleRequest(const RoutingAlgorithmsInterface &algorithms,
     bool request_distance = params.annotations & api::TableParameters::AnnotationsType::Distance;
     bool request_duration = params.annotations & api::TableParameters::AnnotationsType::Duration;
 
+    /**
+     * @brief Nesse ponto é realizada a chamada do algoritmo de matrizes, para isso nesse
+     * ponto foi necessário alterar para receber o resultado no formato alterado
+     * e posteriormente setado o first que possui o resultado antigo para a varável que recebia
+     * o resultado anteriormente
+     * 
+     */
     auto complete_result = algorithms.ManyToManySearch(
         snapped_phantoms, params.sources, params.destinations, request_distance);
     auto result_tables_pair = complete_result.first;
@@ -152,6 +159,10 @@ Status TablePlugin::HandleRequest(const RoutingAlgorithmsInterface &algorithms,
         }
     }
 
+    /**
+     * @brief Alterada a chamada do método makeresponse para passar o novo parâmetro com a matriz de cruzamentos
+     * 
+     */
     api::TableAPI table_api{facade, params};
     table_api.MakeResponse(
         result_tables_pair, complete_result.second, snapped_phantoms, estimated_pairs, result);

@@ -35,6 +35,10 @@ struct EdgeBasedEdge
         EdgeWeight weight;
         EdgeDistance distance;
         EdgeWeight duration : 30;
+        /**
+         * @brief Campo adicionado para armazenar o tipo de cruzamento em um turn
+         * 
+         */
         int crosstype;
         std::uint32_t forward : 1;
         std::uint32_t backward : 1;
@@ -60,6 +64,11 @@ struct EdgeBasedEdge
     NodeID target;
     EdgeData data;
 };
+/**
+ * @brief com a adição de um novo campo é necessário alterar o tamanho esperado para o objeto, 
+ * para que ao rodar o partition não ocorra erro
+ * 
+ */
 static_assert(sizeof(extractor::EdgeBasedEdge) == 32,
               "Size of extractor::EdgeBasedEdge type is "
               "bigger than expected. This will influence "

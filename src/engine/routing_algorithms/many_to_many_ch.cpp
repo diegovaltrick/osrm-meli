@@ -177,6 +177,11 @@ void backwardRoutingStep(const DataFacade<Algorithm> &facade,
 
 } // namespace ch
 
+/**
+ * @brief Todos as alterações nesse arquivo servem apenas para se adequar ao novo tipo de 
+ * reposta do método alterado na interface
+ * 
+ */
 template <>
 std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,

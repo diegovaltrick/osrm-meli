@@ -31,6 +31,12 @@ struct ManyToManyHeapData : HeapData
 {
     EdgeWeight duration;
     EdgeDistance distance;
+    /**
+     * @brief adiciona campo para acumular a quantidade de cruzamentos acumulados 
+     * até um ponto do grafo, também adiciona a inicialização aos construtores e
+     * construtores que também recebam o valor como parâmetro
+     * 
+     */
     int crosses;
     ManyToManyHeapData(NodeID p, EdgeWeight duration, EdgeDistance distance)
         : HeapData(p), duration(duration), distance(distance), crosses(0)

@@ -390,6 +390,13 @@ inline void writeTurnDurationPenalty(const boost::filesystem::path &path,
 }
 
 // LRQ LOGISTICS ROUTING QUALITY
+/**
+ * @brief realiza a leitura do arquivo de cruzamentos
+ * 
+ * @tparam TurnPenaltyT 
+ * @param path 
+ * @param turn_penalty 
+ */
 template <typename TurnPenaltyT>
 inline void readTurnCrossesPenalty(const boost::filesystem::path &path, TurnPenaltyT &turn_penalty)
 {
@@ -399,6 +406,13 @@ inline void readTurnCrossesPenalty(const boost::filesystem::path &path, TurnPena
     storage::serialization::read(reader, "/common/turn_penalty/crosses", turn_penalty);
 }
 
+/**
+ * @brief escreve o arquivo de cruzamentos
+ * 
+ * @tparam TurnPenaltyT 
+ * @param path 
+ * @param turn_penalty 
+ */
 template <typename TurnPenaltyT>
 inline void writeTurnCrossesPenalty(const boost::filesystem::path &path,
                                     const TurnPenaltyT &turn_penalty)

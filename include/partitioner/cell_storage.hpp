@@ -80,7 +80,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
         using WeightPtrT = WeightValueT *;
         using DurationPtrT = DurationValueT *;
         using DistancePtrT = DistanceValueT *;
-        using CrossesPtrT = int *;
+        //using CrossesPtrT = int *;
         BoundarySize num_source_nodes;
         BoundarySize num_destination_nodes;
 

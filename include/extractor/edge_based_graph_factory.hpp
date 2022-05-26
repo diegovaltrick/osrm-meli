@@ -74,6 +74,11 @@ class EdgeBasedGraphFactory
                                    const std::unordered_set<EdgeID> &segregated_edges,
                                    const LaneDescriptionMap &lane_description_map);
 
+    /**
+     * @brief alterado para receber o nome de arquivos que irá armazenar os cruzamentos
+     * como parâmetro e repassar para o método GenerateEdgeExpandedEdges
+     * 
+     */
     void Run(ScriptingEnvironment &scripting_environment,
              const std::string &turn_weight_penalties_filename,
              const std::string &turn_duration_penalties_filename,

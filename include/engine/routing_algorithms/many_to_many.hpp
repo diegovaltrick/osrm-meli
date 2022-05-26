@@ -26,8 +26,24 @@ struct NodeBucket
     EdgeWeight weight;
     EdgeDuration duration;
     EdgeDistance distance;
+    /**
+     * @brief Adicionado campo para acumular a quantidade de cruzamentos para o nó
+     * 
+     */
     int crosses;
 
+    /**
+     * @brief Todos os construtores foram alterados para inicializar 
+     * o campo crosses com valor 0
+     * 
+     * @param middle_node 
+     * @param parent_node 
+     * @param from_clique_arc 
+     * @param column_index 
+     * @param weight 
+     * @param duration 
+     * @param distance 
+     */
     NodeBucket(NodeID middle_node,
                NodeID parent_node,
                bool from_clique_arc,
@@ -119,6 +135,18 @@ struct NodeBucket
 };
 } // namespace
 
+/**
+ * @brief Alterado o tipo de retorno do método que sera sobrescrito para permitir retornar a lista de cruzamentos
+ * 
+ * @tparam Algorithm 
+ * @param engine_working_data 
+ * @param facade 
+ * @param phantom_nodes 
+ * @param source_indices 
+ * @param target_indices 
+ * @param calculate_distance 
+ * @return std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>> 
+ */
 template <typename Algorithm>
 std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,

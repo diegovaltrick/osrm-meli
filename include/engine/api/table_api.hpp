@@ -46,6 +46,17 @@ class TableAPI final : public BaseAPI
     {
     }
 
+    /**
+     * @brief Método que realiza a criação da resposta que será retornada,
+     * nesse caso foi adicionado o parâmetro crosses que recebera a lista de cruzamentos
+     * e montar ao chamar resposta json
+     * 
+     * @param tables 
+     * @param crosses 
+     * @param phantoms 
+     * @param fallback_speed_cells 
+     * @param response 
+     */
     virtual void
     MakeResponse(const std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>> &tables,
                  const std::vector<int> &crosses,
@@ -60,6 +71,10 @@ class TableAPI final : public BaseAPI
         }
         else
         {
+            /**
+             * @brief Adicionado passagem de parâmetro crosses para resposta JSON
+             * 
+             */
             auto &json_result = response.get<util::json::Object>();
             MakeResponse(tables, crosses, phantoms, fallback_speed_cells, json_result);
         }
@@ -167,6 +182,15 @@ class TableAPI final : public BaseAPI
         fb_result.Finish(response.Finish());
     }
 
+    /**
+     * @brief Adicionado o parâmetro crosses para receber a matriz de cruzamentos calculada
+     * 
+     * @param tables 
+     * @param crosses 
+     * @param phantoms 
+     * @param fallback_speed_cells 
+     * @param response 
+     */
     virtual void
     MakeResponse(const std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>> &tables,
                  const std::vector<int> &crosses,
@@ -222,6 +246,10 @@ class TableAPI final : public BaseAPI
                 MakeDistanceTable(tables.second, number_of_sources, number_of_destinations);
         }
 
+        /**
+         * @brief Adiciona campo crosses a resposta retornando a matriz de cruzamentos
+         * 
+         */
         response.values["crosses"] =
             MakeCrossesTable(crosses, number_of_sources, number_of_destinations);
 
@@ -367,6 +395,14 @@ class TableAPI final : public BaseAPI
         return json_table;
     }
 
+    /**
+     * @brief Método que cria a matriz de cruzamentos baseado na lista recebida
+     * 
+     * @param values 
+     * @param number_of_rows 
+     * @param number_of_columns 
+     * @return util::json::Array 
+     */
     virtual util::json::Array MakeCrossesTable(const std::vector<int> &values,
                                                std::size_t number_of_rows,
                                                std::size_t number_of_columns) const

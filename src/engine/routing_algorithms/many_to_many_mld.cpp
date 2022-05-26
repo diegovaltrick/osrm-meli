@@ -36,6 +36,10 @@ inline LevelID getNodeQueryLevel(const MultiLevelPartition &partition,
     return node_level;
 }
 
+/**
+ * @brief adicionado parametro crosses que recebera o acumulado do cruzamento
+ * 
+ */
 template <bool DIRECTION>
 void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
                       const NodeID node,
@@ -65,6 +69,11 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
             const auto node_distance = facade.GetNodeDistance(node_id);
             const auto turn_weight = node_weight + facade.GetWeightPenaltyForEdgeID(turn_id);
             const auto turn_duration = node_duration + facade.GetDurationPenaltyForEdgeID(turn_id); // LRQ
+            /**
+             * @brief implementada lógica para verificar se precisa contar o cruzamento
+             * e somalo ao total
+             * 
+             */
             const auto turn_crosstype = facade.GetCrosstypeForEdgeID(turn_id);
             auto to_crosses = crosses;
             if (turn_crosstype > 0)
@@ -81,6 +90,10 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
             const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
             if (!toHeapNode)
             {
+                /**
+                 * @brief Adiciona o total ao heap se ainda não existir
+                 * 
+                 */
                 query_heap.Insert(
                     to, to_weight, {node, false, to_duration, to_distance, to_crosses}); // LRQ
             }
@@ -91,6 +104,10 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
                               toHeapNode->data.distance,
                               toHeapNode->data.parent))
             {
+                /**
+                 * @brief substitui os dados do nó no heap quando o mesmo já se encontra lá
+                 * 
+                 */
                 toHeapNode->data = {node, false, to_duration, to_distance, to_crosses}; // LRQ
                 toHeapNode->weight = to_weight;
                 query_heap.DecreaseKey(*toHeapNode);
@@ -139,7 +156,11 @@ void relaxOutgoingEdges(
                     const auto to_weight = heapNode.weight + shortcut_weight;
                     const auto to_duration = heapNode.data.duration + shortcut_durations.front();
                     const auto to_distance = heapNode.data.distance + shortcut_distances.front();
-                    const auto to_crosses = heapNode.data.crosses; // + shortcut_crosses.front();
+                    /**
+                     * @brief apenas repassa a quantidade de cruzamentos
+                     * 
+                     */
+                    const auto to_crosses = heapNode.data.crosses;
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
                     {
@@ -184,6 +205,10 @@ void relaxOutgoingEdges(
                     const auto to_weight = heapNode.weight + shortcut_weight;
                     const auto to_duration = heapNode.data.duration + shortcut_durations.front();
                     const auto to_distance = heapNode.data.distance + shortcut_distances.front();
+                    /**
+                     * @brief apenas repassa a quantidade de cruzamentos
+                     * 
+                     */
                     const auto to_crosses = heapNode.data.crosses; // + shortcut_crosses.front();
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
@@ -227,6 +252,10 @@ void relaxOutgoingEdges(
 //
 // Unidirectional multi-layer Dijkstra search for 1-to-N and N-to-1 matrices
 //
+/**
+ * @brief Alterado tipo de retorno para retornar tabelas de cruzamento
+ * 
+ */
 template <bool DIRECTION>
 std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
@@ -240,10 +269,18 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
     std::vector<EdgeDuration> durations_table(phantom_indices.size(), MAXIMAL_EDGE_DURATION);
     std::vector<EdgeDistance> distances_table(calculate_distance ? phantom_indices.size() : 0,
                                               MAXIMAL_EDGE_DISTANCE);
+    /**
+     * @brief Declara tabela de cruzamentos com o tamanho referente a quantidade indices
+     * 
+     */
     std::vector<int> crosses_table(phantom_indices.size());
     std::vector<NodeID> middle_nodes_table(phantom_indices.size(), SPECIAL_NODEID);
 
     // Collect destination (source) nodes into a map
+    /**
+     * @brief Adicionado cruzamentos ao map
+     * 
+     */
     std::unordered_multimap<NodeID,
                             std::tuple<std::size_t, EdgeWeight, EdgeDuration, EdgeDistance, int>>
         target_nodes_index;
@@ -308,6 +345,10 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                 EdgeWeight target_weight;
                 EdgeDuration target_duration;
                 EdgeDistance target_distance;
+                /**
+                 * @brief busca cruzamentos no destino
+                 * 
+                 */
                 int target_crosses;
                 std::tie(index, target_weight, target_duration, target_distance, target_crosses) =
                     it->second;
@@ -317,6 +358,10 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                 {
                     const auto path_duration = duration + target_duration;
                     const auto path_distance = distance + target_distance;
+                    /**
+                     * @brief soma a quantidade ao total
+                     * 
+                     */
                     const auto path_crosses = crosses + target_crosses;
 
                     EdgeDistance nulldistance = 0;
@@ -329,6 +374,11 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                         weights_table[index] = path_weight;
                         durations_table[index] = path_duration;
                         current_distance = path_distance;
+                        /**
+                         * @brief inclui na tabela a quantidade de cruzamentos encontrados
+                         * no caminho para o indice da matriz
+                         * 
+                         */
                         crosses_table[index] = path_crosses;
                         middle_nodes_table[index] = node;
                     }
@@ -422,6 +472,11 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
             facade, heapNode, query_heap, phantom_nodes, phantom_index, phantom_indices);
     }
 
+    /**
+     * @brief Adicionada tabela de cruzamentos ao retorno
+     * 
+     * @return return 
+     */
     return std::make_pair(std::make_pair(std::move(durations_table), std::move(distances_table)),
                           std::move(crosses_table));
 }
@@ -429,6 +484,10 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
 //
 // Bidirectional multi-layer Dijkstra search for M-to-N matrices
 //
+/**
+ * @brief recebe tabela de cruzamentos
+ * 
+ */
 template <bool DIRECTION>
 void forwardRoutingStep(const DataFacade<Algorithm> &facade,
                         const unsigned row_idx,
@@ -478,6 +537,10 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
         auto new_weight = heapNode.weight + target_weight;
         auto new_duration = heapNode.data.duration + target_duration;
         auto new_distance = heapNode.data.distance + target_distance;
+        /**
+         * @brief acumula quantidade de cruzamentos do trajeto
+         * 
+         */
         auto new_crosses = heapNode.data.crosses + target_crosses;
 
         if (new_weight >= 0 && std::tie(new_weight, new_duration, new_distance) <
@@ -486,6 +549,10 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
             current_weight = new_weight;
             current_duration = new_duration;
             current_distance = new_distance;
+            /**
+             * @brief Atribui novo valor ao ponteiro
+             * 
+             */
             current_crosses = new_crosses;
             middle_nodes_table[location] = heapNode.node;
         }
