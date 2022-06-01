@@ -23,6 +23,7 @@ class CellCustomizer
         bool from_clique;
         EdgeDuration duration;
         EdgeDistance distance;
+        int crosses;
     };
 
   public:
@@ -61,7 +62,7 @@ class CellCustomizer
                 }
             }
             heap.Clear();
-            heap.Insert(source, 0, {false, 0, 0});
+            heap.Insert(source, 0, {false, 0, 0, 0});
 
             // explore search space
             while (!heap.Empty() && !destinations_set.empty())
@@ -70,6 +71,7 @@ class CellCustomizer
                 const EdgeWeight weight = heap.GetKey(node);
                 const EdgeDuration duration = heap.GetData(node).duration;
                 const EdgeDistance distance = heap.GetData(node).distance;
+                const int crosses = heap.GetData(node).crosses;
 
                 RelaxNode(graph,
                           cells,
@@ -80,7 +82,8 @@ class CellCustomizer
                           node,
                           weight,
                           duration,
-                          distance);
+                          distance,
+                          crosses);
 
                 destinations_set.erase(node);
             }
@@ -89,11 +92,13 @@ class CellCustomizer
             auto weights = cell.GetOutWeight(source);
             auto durations = cell.GetOutDuration(source);
             auto distances = cell.GetOutDistance(source);
+            auto crosses_list = cell.GetOutCrosses(source);
             for (auto &destination : destinations)
             {
                 BOOST_ASSERT(!weights.empty());
                 BOOST_ASSERT(!durations.empty());
                 BOOST_ASSERT(!distances.empty());
+                BOOST_ASSERT(!crosses_list.empty());
 
                 const bool inserted = heap.WasInserted(destination);
                 weights.front() = inserted ? heap.GetKey(destination) : INVALID_EDGE_WEIGHT;
@@ -101,14 +106,17 @@ class CellCustomizer
                     inserted ? heap.GetData(destination).duration : MAXIMAL_EDGE_DURATION;
                 distances.front() =
                     inserted ? heap.GetData(destination).distance : INVALID_EDGE_DISTANCE;
+                crosses_list.front() = inserted ? heap.GetData(destination).crosses : 0;
 
                 weights.advance_begin(1);
                 durations.advance_begin(1);
                 distances.advance_begin(1);
+                crosses_list.advance_begin(1);
             }
             BOOST_ASSERT(weights.empty());
             BOOST_ASSERT(durations.empty());
             BOOST_ASSERT(distances.empty());
+            BOOST_ASSERT(crosses_list.empty());
         }
     }
 
@@ -146,7 +154,8 @@ class CellCustomizer
                    NodeID node,
                    EdgeWeight weight,
                    EdgeDuration duration,
-                   EdgeDistance distance) const
+                   EdgeDistance distance,
+                   int crosses) const
     {
         auto first_level = level == 1;
         BOOST_ASSERT(heap.WasInserted(node));
@@ -168,6 +177,7 @@ class CellCustomizer
                 auto subcell_destination = subcell.GetDestinationNodes().begin();
                 auto subcell_duration = subcell.GetOutDuration(node).begin();
                 auto subcell_distance = subcell.GetOutDistance(node).begin();
+                auto subcell_crosses = subcell.GetOutCrosses(node).begin();
                 for (auto subcell_weight : subcell.GetOutWeight(node))
                 {
                     if (subcell_weight != INVALID_EDGE_WEIGHT)
@@ -181,9 +191,10 @@ class CellCustomizer
                         const EdgeWeight to_weight = weight + subcell_weight;
                         const EdgeDuration to_duration = duration + *subcell_duration;
                         const EdgeDistance to_distance = distance + *subcell_distance;
+                        const int to_crosses = crosses + *subcell_crosses;
                         if (!heap.WasInserted(to))
                         {
-                            heap.Insert(to, to_weight, {true, to_duration, to_distance});
+                            heap.Insert(to, to_weight, {true, to_duration, to_distance, to_crosses});
                         }
                         else if (std::tie(to_weight, to_duration, to_distance) <
                                  std::tie(heap.GetKey(to),
@@ -191,13 +202,14 @@ class CellCustomizer
                                           heap.GetData(to).distance))
                         {
                             heap.DecreaseKey(to, to_weight);
-                            heap.GetData(to) = {true, to_duration, to_distance};
+                            heap.GetData(to) = {true, to_duration, to_distance, to_crosses};
                         }
                     }
 
                     ++subcell_destination;
                     ++subcell_duration;
                     ++subcell_distance;
+                    ++subcell_crosses;
                 }
             }
         }
@@ -218,17 +230,23 @@ class CellCustomizer
                 const EdgeWeight to_weight = weight + data.weight;
                 const EdgeDuration to_duration = duration + data.duration;
                 const EdgeDistance to_distance = distance + data.distance;
+                int to_crosses = crosses;
+
+                if (data.crosstype > 0) {
+                    to_crosses = to_crosses + 1;
+                }
+
                 if (!heap.WasInserted(to))
                 {
                     heap.Insert(
-                        to, to_weight, {false, duration + data.duration, distance + data.distance});
+                        to, to_weight, {false, duration + data.duration, distance + data.distance, to_crosses});
                 }
                 else if (std::tie(to_weight, to_duration, to_distance) <
                          std::tie(
                              heap.GetKey(to), heap.GetData(to).duration, heap.GetData(to).distance))
                 {
                     heap.DecreaseKey(to, to_weight);
-                    heap.GetData(to) = {false, to_duration, to_distance};
+                    heap.GetData(to) = {false, to_duration, to_distance, to_crosses};
                 }
             }
         }

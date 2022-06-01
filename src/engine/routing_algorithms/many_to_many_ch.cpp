@@ -170,7 +170,8 @@ void backwardRoutingStep(const DataFacade<Algorithm> &facade,
                                            column_index,
                                            heapNode.weight,
                                            heapNode.data.duration,
-                                           heapNode.data.distance);
+                                           heapNode.data.distance,
+                                           heapNode.data.crosses);
 
     relaxOutgoingEdges<REVERSE_DIRECTION>(facade, heapNode, query_heap, phantom_node);
 }

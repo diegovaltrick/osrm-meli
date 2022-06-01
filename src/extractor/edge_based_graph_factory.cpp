@@ -646,6 +646,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                              weight,
                                              duration,
                                              distance,
+                                             crosses,
                                              true,
                                              false};
 

@@ -144,6 +144,7 @@ void relaxOutgoingEdges(
             auto destination = cell.GetDestinationNodes().begin();
             auto shortcut_durations = cell.GetOutDuration(heapNode.node);
             auto shortcut_distances = cell.GetOutDistance(heapNode.node);
+            auto shortcut_crosses = cell.GetOutCrosses(heapNode.node);
             for (auto shortcut_weight : cell.GetOutWeight(heapNode.node))
             {
                 BOOST_ASSERT(destination != cell.GetDestinationNodes().end());
@@ -160,7 +161,7 @@ void relaxOutgoingEdges(
                      * @brief apenas repassa a quantidade de cruzamentos
                      * 
                      */
-                    const auto to_crosses = heapNode.data.crosses;
+                    const auto to_crosses = heapNode.data.crosses + shortcut_crosses.front();
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
                     {
@@ -184,20 +185,25 @@ void relaxOutgoingEdges(
                 ++destination;
                 shortcut_durations.advance_begin(1);
                 shortcut_distances.advance_begin(1);
+                shortcut_crosses.advance_begin(1);
             }
             BOOST_ASSERT(shortcut_durations.empty());
             BOOST_ASSERT(shortcut_distances.empty());
+            BOOST_ASSERT(shortcut_crosses.empty());
         }
         else
         { // Shortcuts in backward direction
             auto source = cell.GetSourceNodes().begin();
             auto shortcut_durations = cell.GetInDuration(heapNode.node);
             auto shortcut_distances = cell.GetInDistance(heapNode.node);
+            auto shortcut_crosses = cell.GetInCrosses(heapNode.node);
+
             for (auto shortcut_weight : cell.GetInWeight(heapNode.node))
             {
                 BOOST_ASSERT(source != cell.GetSourceNodes().end());
                 BOOST_ASSERT(!shortcut_durations.empty());
                 BOOST_ASSERT(!shortcut_distances.empty());
+                BOOST_ASSERT(!shortcut_crosses.empty());
                 const NodeID to = *source;
 
                 if (shortcut_weight != INVALID_EDGE_WEIGHT && heapNode.node != to)
@@ -209,7 +215,7 @@ void relaxOutgoingEdges(
                      * @brief apenas repassa a quantidade de cruzamentos
                      * 
                      */
-                    const auto to_crosses = heapNode.data.crosses; // + shortcut_crosses.front();
+                    const auto to_crosses = heapNode.data.crosses + shortcut_crosses.front();
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
                     {
@@ -233,9 +239,11 @@ void relaxOutgoingEdges(
                 ++source;
                 shortcut_durations.advance_begin(1);
                 shortcut_distances.advance_begin(1);
+                shortcut_crosses.advance_begin(1);
             }
             BOOST_ASSERT(shortcut_durations.empty());
             BOOST_ASSERT(shortcut_distances.empty());
+            BOOST_ASSERT(shortcut_crosses.empty());
         }
     }
 

@@ -16,7 +16,7 @@ struct EdgeBasedEdge
     struct EdgeData
     {
         EdgeData()
-            : turn_id(0), weight(0), distance(0), duration(0), forward(false), backward(false)
+            : turn_id(0), weight(0), distance(0), duration(0), crosstype(0), forward(false), backward(false)
         {
         }
 
@@ -24,9 +24,10 @@ struct EdgeBasedEdge
                  const EdgeWeight weight,
                  const EdgeDistance distance,
                  const EdgeWeight duration,
+                 const int crosstype,
                  const bool forward,
                  const bool backward)
-            : turn_id(turn_id), weight(weight), distance(distance), duration(duration),
+            : turn_id(turn_id), weight(weight), distance(distance), duration(duration), crosstype(crosstype),
               forward(forward), backward(backward)
         {
         }
@@ -54,6 +55,7 @@ struct EdgeBasedEdge
                   const EdgeWeight weight,
                   const EdgeWeight duration,
                   const EdgeDistance distance,
+                  const int crosses,
                   const bool forward,
                   const bool backward);
     EdgeBasedEdge(const NodeID source, const NodeID target, const EdgeBasedEdge::EdgeData &data);
@@ -84,9 +86,10 @@ inline EdgeBasedEdge::EdgeBasedEdge(const NodeID source,
                                     const EdgeWeight weight,
                                     const EdgeWeight duration,
                                     const EdgeDistance distance,
+                                    const int crosses,
                                     const bool forward,
                                     const bool backward)
-    : source(source), target(target), data{turn_id, weight, distance, duration, forward, backward}
+    : source(source), target(target), data{turn_id, weight, distance, duration, crosses, forward, backward}
 {
 }
 

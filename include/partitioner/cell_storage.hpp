@@ -73,21 +73,21 @@ template <storage::Ownership Ownership> class CellStorageImpl
 
     // Implementation of the cell view. We need a template parameter here
     // because we need to derive a read-only and read-write view from this.
-    template <typename WeightValueT, typename DurationValueT, typename DistanceValueT>
+    template <typename WeightValueT, typename DurationValueT, typename DistanceValueT, typename CrossesValueT>
     class CellImpl
     {
       private:
         using WeightPtrT = WeightValueT *;
         using DurationPtrT = DurationValueT *;
         using DistancePtrT = DistanceValueT *;
-        //using CrossesPtrT = int *;
+        using CrossesPtrT = CrossesValueT *;
         BoundarySize num_source_nodes;
         BoundarySize num_destination_nodes;
 
         WeightPtrT const weights;
         DurationPtrT const durations;
         DistancePtrT const distances;
-        //CrossesPtrT const crosses;
+        CrossesPtrT const crosses;
         const NodeID *const source_boundary;
         const NodeID *const destination_boundary;
 
@@ -176,9 +176,9 @@ template <storage::Ownership Ownership> class CellStorageImpl
 
         auto GetOutDistance(NodeID node) const { return GetOutRange(distances, node); }
 
-        //auto GetInCrosses(NodeID node) const { return GetInRange(crosses, node); }
+        auto GetInCrosses(NodeID node) const { return GetInRange(crosses, node); }
 
-        //auto GetOutCrosses(NodeID node) const { return GetOutRange(crosses, node); }
+        auto GetOutCrosses(NodeID node) const { return GetOutRange(crosses, node); }
 
         auto GetSourceNodes() const
         {
@@ -195,7 +195,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
                  WeightPtrT const all_weights,
                  DurationPtrT const all_durations,
                  DistancePtrT const all_distances,
-                 //CrossesPtrT const all_crosses,
+                 CrossesPtrT const all_crosses,
                  const NodeID *const all_sources,
                  const NodeID *const all_destinations)
             : num_source_nodes{data.num_source_nodes},
@@ -203,7 +203,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
                                                                          data.value_offset},
               durations{all_durations + data.value_offset}, distances{all_distances +
                                                                       data.value_offset},
-              //crosses(all_crosses + data.value_offset),
+              crosses(all_crosses + data.value_offset),
               source_boundary{all_sources + data.source_boundary_offset},
               destination_boundary{all_destinations + data.destination_boundary_offset}
         {
@@ -221,7 +221,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
                  const NodeID *const all_destinations)
             : num_source_nodes{data.num_source_nodes},
               num_destination_nodes{data.num_destination_nodes}, weights{nullptr},
-              durations{nullptr}, distances{nullptr}, /*crosses(nullptr),*/  source_boundary{all_sources +
+              durations{nullptr}, distances{nullptr}, crosses(0),  source_boundary{all_sources +
                                                                       data.source_boundary_offset},
               destination_boundary{all_destinations + data.destination_boundary_offset}
         {
@@ -233,8 +233,8 @@ template <storage::Ownership Ownership> class CellStorageImpl
     std::size_t LevelIDToIndex(LevelID level) const { return level - 1; }
 
   public:
-    using Cell = CellImpl<EdgeWeight, EdgeDuration, EdgeDistance>;
-    using ConstCell = CellImpl<const EdgeWeight, const EdgeDuration, const EdgeDistance>;
+    using Cell = CellImpl<EdgeWeight, EdgeDuration, EdgeDistance, int>;
+    using ConstCell = CellImpl<const EdgeWeight, const EdgeDuration, const EdgeDistance, const int>;
 
     CellStorageImpl() {}
 
@@ -383,6 +383,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
         metric.weights.resize(total_size + 1, INVALID_EDGE_WEIGHT);
         metric.durations.resize(total_size + 1, MAXIMAL_EDGE_DURATION);
         metric.distances.resize(total_size + 1, INVALID_EDGE_DISTANCE);
+        metric.crosses.resize(total_size + 1, 0);
 
         return metric;
     }
@@ -411,7 +412,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
                          metric.weights.data(),
                          metric.durations.data(),
                          metric.distances.data(),
-                         //metric.crosses.data(),
+                         metric.crosses.data(),
                          source_boundary.empty() ? nullptr : source_boundary.data(),
                          destination_boundary.empty() ? nullptr : destination_boundary.data()};
     }
@@ -440,7 +441,7 @@ template <storage::Ownership Ownership> class CellStorageImpl
                     metric.weights.data(),
                     metric.durations.data(),
                     metric.distances.data(),
-                    //metric.crosses.data(),
+                    metric.crosses.data(),
                     source_boundary.data(),
                     destination_boundary.data()};
     }

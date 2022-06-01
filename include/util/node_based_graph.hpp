@@ -28,7 +28,7 @@ struct NodeBasedEdgeData
     NodeBasedEdgeData()
         : weight(INVALID_EDGE_WEIGHT), duration(INVALID_EDGE_WEIGHT),
           distance(INVALID_EDGE_DISTANCE), geometry_id({0, false}), reversed(false),
-          annotation_data(-1)
+          annotation_data(-1), crosstype(0)
     {
     }
 

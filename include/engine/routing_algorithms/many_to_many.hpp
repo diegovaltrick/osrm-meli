@@ -36,38 +36,7 @@ struct NodeBucket
      * @brief Todos os construtores foram alterados para inicializar 
      * o campo crosses com valor 0
      * 
-     * @param middle_node 
-     * @param parent_node 
-     * @param from_clique_arc 
-     * @param column_index 
-     * @param weight 
-     * @param duration 
-     * @param distance 
      */
-    NodeBucket(NodeID middle_node,
-               NodeID parent_node,
-               bool from_clique_arc,
-               unsigned column_index,
-               EdgeWeight weight,
-               EdgeDuration duration,
-               EdgeDistance distance)
-        : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
-          from_clique_arc(from_clique_arc), weight(weight), duration(duration), distance(distance),
-          crosses(0)
-    {
-    }
-
-    NodeBucket(NodeID middle_node,
-               NodeID parent_node,
-               unsigned column_index,
-               EdgeWeight weight,
-               EdgeDuration duration,
-               EdgeDistance distance)
-        : middle_node(middle_node), parent_node(parent_node), column_index(column_index),
-          from_clique_arc(false), weight(weight), duration(duration), distance(distance), crosses(0)
-    {
-    }
-
     NodeBucket(NodeID middle_node,
                NodeID parent_node,
                bool from_clique_arc,
