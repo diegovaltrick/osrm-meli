@@ -197,6 +197,18 @@ inline auto make_turn_duration_view(const SharedDataIndex &index, const std::str
     return make_vector_view<TurnPenalty>(index, name + "/duration");
 }
 
+/**
+ * @brief Cria tabela para crosses
+ * 
+ * @param index 
+ * @param name 
+ * @return auto 
+ */
+inline auto make_turn_crosses_view(const SharedDataIndex &index, const std::string &name)
+{
+    return make_vector_view<TurnPenalty>(index, name + "/crosses");
+}
+
 inline auto make_search_tree_view(const SharedDataIndex &index, const std::string &name)
 {
     using RTreeLeaf = extractor::EdgeBasedNodeSegment;
@@ -300,13 +312,15 @@ inline auto make_filtered_cell_metric_view(const SharedDataIndex &index,
     auto weights_block_id = prefix + "/weights";
     auto durations_block_id = prefix + "/durations";
     auto distances_block_id = prefix + "/distances";
+    auto crosses_block_id = prefix + "/crosses";
 
     auto weights = make_vector_view<EdgeWeight>(index, weights_block_id);
     auto durations = make_vector_view<EdgeDuration>(index, durations_block_id);
     auto distances = make_vector_view<EdgeDistance>(index, distances_block_id);
+    auto crosses = make_vector_view<EdgeDuration>(index, crosses_block_id);
 
     return customizer::CellMetricView{
-        std::move(weights), std::move(durations), std::move(distances)};
+        std::move(weights), std::move(durations), std::move(distances), std::move(crosses)};
 }
 
 inline auto make_cell_metric_view(const SharedDataIndex &index, const std::string &name)
@@ -320,13 +334,15 @@ inline auto make_cell_metric_view(const SharedDataIndex &index, const std::strin
         auto weights_block_id = prefix + "/weights";
         auto durations_block_id = prefix + "/durations";
         auto distances_block_id = prefix + "/distances";
+        auto crosses_block_id = prefix + "/crosses";
 
         auto weights = make_vector_view<EdgeWeight>(index, weights_block_id);
         auto durations = make_vector_view<EdgeDuration>(index, durations_block_id);
         auto distances = make_vector_view<EdgeDistance>(index, distances_block_id);
+        auto crosses = make_vector_view<EdgeDuration>(index, crosses_block_id);
 
         cell_metric_excludes.push_back(customizer::CellMetricView{
-            std::move(weights), std::move(durations), std::move(distances)});
+            std::move(weights), std::move(durations), std::move(distances), std::move(crosses)});
     }
 
     return cell_metric_excludes;
@@ -345,6 +361,7 @@ inline auto make_multi_level_graph_view(const SharedDataIndex &index, const std:
     auto node_distances = make_vector_view<EdgeDistance>(index, name + "/node_distances");
     auto is_forward_edge = make_vector_view<bool>(index, name + "/is_forward_edge");
     auto is_backward_edge = make_vector_view<bool>(index, name + "/is_backward_edge");
+    // auto node_crosses = make_vector_view<int>(index, name + "/node_crosses");
 
     return customizer::MultiLevelEdgeBasedGraphView(std::move(node_list),
                                                     std::move(edge_list),

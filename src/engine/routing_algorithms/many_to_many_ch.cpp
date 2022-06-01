@@ -170,15 +170,21 @@ void backwardRoutingStep(const DataFacade<Algorithm> &facade,
                                            column_index,
                                            heapNode.weight,
                                            heapNode.data.duration,
-                                           heapNode.data.distance);
+                                           heapNode.data.distance,
+                                           heapNode.data.crosses);
 
     relaxOutgoingEdges<REVERSE_DIRECTION>(facade, heapNode, query_heap, phantom_node);
 }
 
 } // namespace ch
 
+/**
+ * @brief Todos as alterações nesse arquivo servem apenas para se adequar ao novo tipo de 
+ * reposta do método alterado na interface
+ * 
+ */
 template <>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,
                  const DataFacade<ch::Algorithm> &facade,
                  const std::vector<PhantomNode> &phantom_nodes,
@@ -189,6 +195,7 @@ manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,
     const auto number_of_sources = source_indices.size();
     const auto number_of_targets = target_indices.size();
     const auto number_of_entries = number_of_sources * number_of_targets;
+    const std::vector<int> test;
 
     std::vector<EdgeWeight> weights_table(number_of_entries, INVALID_EDGE_WEIGHT);
     std::vector<EdgeDuration> durations_table(number_of_entries, MAXIMAL_EDGE_DURATION);
@@ -248,7 +255,8 @@ manyToManySearch(SearchEngineData<ch::Algorithm> &engine_working_data,
         }
     }
 
-    return std::make_pair(std::move(durations_table), std::move(distances_table));
+    return std::make_pair(std::make_pair(std::move(durations_table), std::move(distances_table)),
+                          test);
 }
 
 } // namespace routing_algorithms

@@ -205,6 +205,7 @@ void GraphCompressor::Compress(const std::unordered_set<NodeID> &barrier_nodes,
                 const bool has_node_penalty = traffic_signals.find(node_v) != traffic_signals.end();
                 EdgeDuration node_duration_penalty = MAXIMAL_EDGE_DURATION;
                 EdgeWeight node_weight_penalty = INVALID_EDGE_WEIGHT;
+                int node_cross = 0;
                 if (has_node_penalty)
                 {
                     // we cannot handle this as node penalty, if it depends on turn direction
@@ -242,6 +243,7 @@ void GraphCompressor::Compress(const std::unordered_set<NodeID> &barrier_nodes,
                     scripting_environment.ProcessTurn(extraction_turn);
                     node_duration_penalty = extraction_turn.duration * 10;
                     node_weight_penalty = extraction_turn.weight * weight_multiplier;
+                    node_cross = extraction_turn.crosstype;
                 }
 
                 // Get weights before graph is modified
@@ -284,6 +286,9 @@ void GraphCompressor::Compress(const std::unordered_set<NodeID> &barrier_nodes,
                 // add distance of e2's to e1
                 graph.GetEdgeData(forward_e1).distance += forward_distance2;
                 graph.GetEdgeData(reverse_e1).distance += reverse_distance2;
+
+                graph.GetEdgeData(forward_e1).crosstype = node_cross;
+                graph.GetEdgeData(reverse_e1).crosstype = node_cross;
 
                 if (node_weight_penalty != INVALID_EDGE_WEIGHT &&
                     node_duration_penalty != MAXIMAL_EDGE_DURATION)

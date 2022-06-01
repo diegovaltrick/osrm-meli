@@ -47,6 +47,7 @@ struct UpdaterConfig final : storage::IOConfig
         : IOConfig({".osrm.ebg",
                     ".osrm.turn_weight_penalties",
                     ".osrm.turn_duration_penalties",
+                    ".osrm.turn_crosses_penalties",
                     ".osrm.turn_penalties_index",
                     ".osrm.nbg_nodes",
                     ".osrm.ebg_nodes",

@@ -331,7 +331,8 @@ std::vector<std::pair<bool, boost::filesystem::path>> Storage::GetUpdatableFiles
         {REQUIRED, config.GetPath(".osrm.datasource_names")},
         {REQUIRED, config.GetPath(".osrm.geometry")},
         {REQUIRED, config.GetPath(".osrm.turn_weight_penalties")},
-        {REQUIRED, config.GetPath(".osrm.turn_duration_penalties")}};
+        {REQUIRED, config.GetPath(".osrm.turn_duration_penalties")},
+        {REQUIRED, config.GetPath(".osrm.turn_crosses_penalties")}};
 
     for (const auto &file : files)
     {
@@ -524,6 +525,13 @@ void Storage::PopulateUpdatableData(const SharedDataIndex &index)
         auto turn_duration_penalties = make_turn_duration_view(index, "/common/turn_penalty");
         extractor::files::readTurnDurationPenalty(config.GetPath(".osrm.turn_duration_penalties"),
                                                   turn_duration_penalties);
+    }
+
+    // LRQ
+    {
+        auto turn_crosses_penalties = make_turn_crosses_view(index, "/common/turn_penalty");
+        extractor::files::readTurnCrossesPenalty(config.GetPath(".osrm.turn_crosses_penalties"),
+                                                 turn_crosses_penalties);
     }
 
     // FIXME we only need to get the weight name

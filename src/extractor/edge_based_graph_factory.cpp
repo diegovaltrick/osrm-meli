@@ -235,6 +235,7 @@ void EdgeBasedGraphFactory::Run(
     ScriptingEnvironment &scripting_environment,
     const std::string &turn_weight_penalties_filename,
     const std::string &turn_duration_penalties_filename,
+    const std::string &turn_crosses_penalties_filename,
     const std::string &turn_penalties_index_filename,
     const std::string &cnbg_ebg_mapping_path,
     const std::string &conditional_penalties_filename,
@@ -265,6 +266,7 @@ void EdgeBasedGraphFactory::Run(
     GenerateEdgeExpandedEdges(scripting_environment,
                               turn_weight_penalties_filename,
                               turn_duration_penalties_filename,
+                              turn_crosses_penalties_filename,
                               turn_penalties_index_filename,
                               conditional_penalties_filename,
                               maneuver_overrides_filename,
@@ -441,6 +443,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
     ScriptingEnvironment &scripting_environment,
     const std::string &turn_weight_penalties_filename,
     const std::string &turn_duration_penalties_filename,
+    const std::string &turn_crosses_penalties_filename,
     const std::string &turn_penalties_index_filename,
     const std::string &conditional_penalties_filename,
     const std::string &maneuver_overrides_filename,
@@ -468,6 +471,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
     // FIXME these need to be tuned in pre-allocated size
     std::vector<TurnPenalty> turn_weight_penalties;
     std::vector<TurnPenalty> turn_duration_penalties;
+    std::vector<TurnPenalty> turn_crosses_penalties; // LRQ
     std::vector<lookup::TurnIndexBlock> turn_penalties_index;
 
     // Now, renumber all our maneuver overrides to use edge-based-nodes
@@ -497,12 +501,14 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
             lookup::TurnIndexBlock turn_index;
             TurnPenalty turn_weight_penalty;
             TurnPenalty turn_duration_penalty;
+            TurnPenalty turn_crosses_penalty; // LRQ
         };
 
         auto const transfer_data = [&](const EdgeWithData &edge_with_data) {
             m_edge_based_edge_list.push_back(edge_with_data.edge);
             turn_weight_penalties.push_back(edge_with_data.turn_weight_penalty);
             turn_duration_penalties.push_back(edge_with_data.turn_duration_penalty);
+            turn_crosses_penalties.push_back(edge_with_data.turn_crosses_penalty); // LRQ
             turn_penalties_index.push_back(edge_with_data.turn_index);
         };
 
@@ -623,6 +629,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
             auto weight_penalty =
                 boost::numeric_cast<TurnPenalty>(extracted_turn.weight * weight_multiplier);
             auto duration_penalty = boost::numeric_cast<TurnPenalty>(extracted_turn.duration * 10.);
+            auto crosses = boost::numeric_cast<TurnPenalty>(extracted_turn.crosstype); // LRQ
 
             BOOST_ASSERT(SPECIAL_NODEID != nbe_to_ebn_mapping[node_based_edge_from]);
             BOOST_ASSERT(SPECIAL_NODEID != nbe_to_ebn_mapping[node_based_edge_to]);
@@ -639,6 +646,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                                              weight,
                                              duration,
                                              distance,
+                                             crosses,
                                              true,
                                              false};
 
@@ -662,15 +670,20 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
             lookup::TurnIndexBlock turn_index_block = {from_node, intersection_node, to_node};
 
             // insert data into the designated buffer
-            return EdgeWithData{
-                edge_based_edge, turn_index_block, weight_penalty, duration_penalty};
+            return EdgeWithData{edge_based_edge,
+                                turn_index_block,
+                                weight_penalty,
+                                duration_penalty,
+                                crosses}; // LRQ
         };
 
         //
         // Edge-based-graph stage
         //
         tbb::filter_t<tbb::blocked_range<NodeID>, EdgesPipelineBufferPtr> processor_stage(
-            tbb::filter::parallel, [&](const tbb::blocked_range<NodeID> &intersection_node_range) {
+            tbb::filter::parallel,
+            [&](const tbb::blocked_range<NodeID> &intersection_node_range)
+            {
                 auto buffer = std::make_shared<EdgesPipelineBuffer>();
                 buffer->nodes_processed = intersection_node_range.size();
 
@@ -1176,6 +1189,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                  turn_weight_penalties.size() == turn_penalties_index.size());
     files::writeTurnWeightPenalty(turn_weight_penalties_filename, turn_weight_penalties);
     files::writeTurnDurationPenalty(turn_duration_penalties_filename, turn_duration_penalties);
+    files::writeTurnCrossesPenalty(turn_crosses_penalties_filename, turn_crosses_penalties); // LRQ
     files::writeTurnPenaltiesIndex(turn_penalties_index_filename, turn_penalties_index);
 
     util::Log() << "Generated " << m_edge_based_node_segments.size() << " edge based node segments";

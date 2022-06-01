@@ -36,12 +36,17 @@ inline LevelID getNodeQueryLevel(const MultiLevelPartition &partition,
     return node_level;
 }
 
+/**
+ * @brief adicionado parametro crosses que recebera o acumulado do cruzamento
+ * 
+ */
 template <bool DIRECTION>
 void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
                       const NodeID node,
                       const EdgeWeight weight,
                       const EdgeDuration duration,
                       const EdgeDistance distance,
+                      const int crosses,
                       typename SearchEngineData<mld::Algorithm>::ManyToManyQueryHeap &query_heap,
                       LevelID level)
 {
@@ -63,7 +68,18 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
             const auto node_duration = facade.GetNodeDuration(node_id);
             const auto node_distance = facade.GetNodeDistance(node_id);
             const auto turn_weight = node_weight + facade.GetWeightPenaltyForEdgeID(turn_id);
-            const auto turn_duration = node_duration + facade.GetDurationPenaltyForEdgeID(turn_id);
+            const auto turn_duration = node_duration + facade.GetDurationPenaltyForEdgeID(turn_id); // LRQ
+            /**
+             * @brief implementada lógica para verificar se precisa contar o cruzamento
+             * e somalo ao total
+             * 
+             */
+            const auto turn_crosstype = facade.GetCrosstypeForEdgeID(turn_id);
+            auto to_crosses = crosses;
+            if (turn_crosstype > 0)
+            {
+                to_crosses = to_crosses + 1;
+            }
 
             BOOST_ASSERT_MSG(node_weight + turn_weight > 0, "edge weight is invalid");
             const auto to_weight = weight + turn_weight;
@@ -74,7 +90,12 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
             const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
             if (!toHeapNode)
             {
-                query_heap.Insert(to, to_weight, {node, false, to_duration, to_distance});
+                /**
+                 * @brief Adiciona o total ao heap se ainda não existir
+                 * 
+                 */
+                query_heap.Insert(
+                    to, to_weight, {node, false, to_duration, to_distance, to_crosses}); // LRQ
             }
             // Found a shorter Path -> Update weight and set new parent
             else if (std::tie(to_weight, to_duration, to_distance, node) <
@@ -83,7 +104,11 @@ void relaxBorderEdges(const DataFacade<mld::Algorithm> &facade,
                               toHeapNode->data.distance,
                               toHeapNode->data.parent))
             {
-                toHeapNode->data = {node, false, to_duration, to_distance};
+                /**
+                 * @brief substitui os dados do nó no heap quando o mesmo já se encontra lá
+                 * 
+                 */
+                toHeapNode->data = {node, false, to_duration, to_distance, to_crosses}; // LRQ
                 toHeapNode->weight = to_weight;
                 query_heap.DecreaseKey(*toHeapNode);
             }
@@ -119,6 +144,7 @@ void relaxOutgoingEdges(
             auto destination = cell.GetDestinationNodes().begin();
             auto shortcut_durations = cell.GetOutDuration(heapNode.node);
             auto shortcut_distances = cell.GetOutDistance(heapNode.node);
+            auto shortcut_crosses = cell.GetOutCrosses(heapNode.node);
             for (auto shortcut_weight : cell.GetOutWeight(heapNode.node))
             {
                 BOOST_ASSERT(destination != cell.GetDestinationNodes().end());
@@ -131,11 +157,18 @@ void relaxOutgoingEdges(
                     const auto to_weight = heapNode.weight + shortcut_weight;
                     const auto to_duration = heapNode.data.duration + shortcut_durations.front();
                     const auto to_distance = heapNode.data.distance + shortcut_distances.front();
+                    /**
+                     * @brief apenas repassa a quantidade de cruzamentos
+                     * 
+                     */
+                    const auto to_crosses = heapNode.data.crosses + shortcut_crosses.front();
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
                     {
                         query_heap.Insert(
-                            to, to_weight, {heapNode.node, true, to_duration, to_distance});
+                            to,
+                            to_weight,
+                            {heapNode.node, true, to_duration, to_distance, to_crosses});
                     }
                     else if (std::tie(to_weight, to_duration, to_distance, heapNode.node) <
                              std::tie(toHeapNode->weight,
@@ -143,7 +176,8 @@ void relaxOutgoingEdges(
                                       toHeapNode->data.distance,
                                       toHeapNode->data.parent))
                     {
-                        toHeapNode->data = {heapNode.node, true, to_duration, to_distance};
+                        toHeapNode->data = {
+                            heapNode.node, true, to_duration, to_distance, to_crosses};
                         toHeapNode->weight = to_weight;
                         query_heap.DecreaseKey(*toHeapNode);
                     }
@@ -151,20 +185,25 @@ void relaxOutgoingEdges(
                 ++destination;
                 shortcut_durations.advance_begin(1);
                 shortcut_distances.advance_begin(1);
+                shortcut_crosses.advance_begin(1);
             }
             BOOST_ASSERT(shortcut_durations.empty());
             BOOST_ASSERT(shortcut_distances.empty());
+            BOOST_ASSERT(shortcut_crosses.empty());
         }
         else
         { // Shortcuts in backward direction
             auto source = cell.GetSourceNodes().begin();
             auto shortcut_durations = cell.GetInDuration(heapNode.node);
             auto shortcut_distances = cell.GetInDistance(heapNode.node);
+            auto shortcut_crosses = cell.GetInCrosses(heapNode.node);
+
             for (auto shortcut_weight : cell.GetInWeight(heapNode.node))
             {
                 BOOST_ASSERT(source != cell.GetSourceNodes().end());
                 BOOST_ASSERT(!shortcut_durations.empty());
                 BOOST_ASSERT(!shortcut_distances.empty());
+                BOOST_ASSERT(!shortcut_crosses.empty());
                 const NodeID to = *source;
 
                 if (shortcut_weight != INVALID_EDGE_WEIGHT && heapNode.node != to)
@@ -172,11 +211,18 @@ void relaxOutgoingEdges(
                     const auto to_weight = heapNode.weight + shortcut_weight;
                     const auto to_duration = heapNode.data.duration + shortcut_durations.front();
                     const auto to_distance = heapNode.data.distance + shortcut_distances.front();
+                    /**
+                     * @brief apenas repassa a quantidade de cruzamentos
+                     * 
+                     */
+                    const auto to_crosses = heapNode.data.crosses + shortcut_crosses.front();
                     const auto toHeapNode = query_heap.GetHeapNodeIfWasInserted(to);
                     if (!toHeapNode)
                     {
                         query_heap.Insert(
-                            to, to_weight, {heapNode.node, true, to_duration, to_distance});
+                            to,
+                            to_weight,
+                            {heapNode.node, true, to_duration, to_distance, to_crosses});
                     }
                     else if (std::tie(to_weight, to_duration, to_distance, heapNode.node) <
                              std::tie(toHeapNode->weight,
@@ -184,7 +230,8 @@ void relaxOutgoingEdges(
                                       toHeapNode->data.distance,
                                       toHeapNode->data.parent))
                     {
-                        toHeapNode->data = {heapNode.node, true, to_duration, to_distance};
+                        toHeapNode->data = {
+                            heapNode.node, true, to_duration, to_distance, to_crosses};
                         toHeapNode->weight = to_weight;
                         query_heap.DecreaseKey(*toHeapNode);
                     }
@@ -192,9 +239,11 @@ void relaxOutgoingEdges(
                 ++source;
                 shortcut_durations.advance_begin(1);
                 shortcut_distances.advance_begin(1);
+                shortcut_crosses.advance_begin(1);
             }
             BOOST_ASSERT(shortcut_durations.empty());
             BOOST_ASSERT(shortcut_distances.empty());
+            BOOST_ASSERT(shortcut_crosses.empty());
         }
     }
 
@@ -203,6 +252,7 @@ void relaxOutgoingEdges(
                                 heapNode.weight,
                                 heapNode.data.duration,
                                 heapNode.data.distance,
+                                heapNode.data.crosses,
                                 query_heap,
                                 level);
 }
@@ -210,8 +260,12 @@ void relaxOutgoingEdges(
 //
 // Unidirectional multi-layer Dijkstra search for 1-to-N and N-to-1 matrices
 //
+/**
+ * @brief Alterado tipo de retorno para retornar tabelas de cruzamento
+ * 
+ */
 template <bool DIRECTION>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                 const DataFacade<Algorithm> &facade,
                 const std::vector<PhantomNode> &phantom_nodes,
@@ -223,10 +277,20 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
     std::vector<EdgeDuration> durations_table(phantom_indices.size(), MAXIMAL_EDGE_DURATION);
     std::vector<EdgeDistance> distances_table(calculate_distance ? phantom_indices.size() : 0,
                                               MAXIMAL_EDGE_DISTANCE);
+    /**
+     * @brief Declara tabela de cruzamentos com o tamanho referente a quantidade indices
+     * 
+     */
+    std::vector<int> crosses_table(phantom_indices.size());
     std::vector<NodeID> middle_nodes_table(phantom_indices.size(), SPECIAL_NODEID);
 
     // Collect destination (source) nodes into a map
-    std::unordered_multimap<NodeID, std::tuple<std::size_t, EdgeWeight, EdgeDuration, EdgeDistance>>
+    /**
+     * @brief Adicionado cruzamentos ao map
+     * 
+     */
+    std::unordered_multimap<NodeID,
+                            std::tuple<std::size_t, EdgeWeight, EdgeDuration, EdgeDistance, int>>
         target_nodes_index;
     target_nodes_index.reserve(phantom_indices.size());
     for (std::size_t index = 0; index < phantom_indices.size(); ++index)
@@ -242,14 +306,16 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                      std::make_tuple(index,
                                      phantom_node.GetForwardWeightPlusOffset(),
                                      phantom_node.GetForwardDuration(),
-                                     phantom_node.GetForwardDistance())});
+                                     phantom_node.GetForwardDistance(),
+                                     0)});
             if (phantom_node.IsValidReverseTarget())
                 target_nodes_index.insert(
                     {phantom_node.reverse_segment_id.id,
                      std::make_tuple(index,
                                      phantom_node.GetReverseWeightPlusOffset(),
                                      phantom_node.GetReverseDuration(),
-                                     phantom_node.GetReverseDistance())});
+                                     phantom_node.GetReverseDistance(),
+                                     0)});
         }
         else if (DIRECTION == REVERSE_DIRECTION)
         {
@@ -259,14 +325,16 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                      std::make_tuple(index,
                                      -phantom_node.GetForwardWeightPlusOffset(),
                                      -phantom_node.GetForwardDuration(),
-                                     -phantom_node.GetForwardDistance())});
+                                     -phantom_node.GetForwardDistance(),
+                                     0)});
             if (phantom_node.IsValidReverseSource())
                 target_nodes_index.insert(
                     {phantom_node.reverse_segment_id.id,
                      std::make_tuple(index,
                                      -phantom_node.GetReverseWeightPlusOffset(),
                                      -phantom_node.GetReverseDuration(),
-                                     -phantom_node.GetReverseDistance())});
+                                     -phantom_node.GetReverseDistance(),
+                                     0)});
         }
     }
 
@@ -277,7 +345,7 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
 
     // Check if node is in the destinations list and update weights/durations
     auto update_values =
-        [&](NodeID node, EdgeWeight weight, EdgeDuration duration, EdgeDistance distance) {
+        [&](NodeID node, EdgeWeight weight, EdgeDuration duration, EdgeDistance distance, int crosses) {
             auto candidates = target_nodes_index.equal_range(node);
             for (auto it = candidates.first; it != candidates.second;)
             {
@@ -285,13 +353,24 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                 EdgeWeight target_weight;
                 EdgeDuration target_duration;
                 EdgeDistance target_distance;
-                std::tie(index, target_weight, target_duration, target_distance) = it->second;
+                /**
+                 * @brief busca cruzamentos no destino
+                 * 
+                 */
+                int target_crosses;
+                std::tie(index, target_weight, target_duration, target_distance, target_crosses) =
+                    it->second;
 
                 const auto path_weight = weight + target_weight;
                 if (path_weight >= 0)
                 {
                     const auto path_duration = duration + target_duration;
                     const auto path_distance = distance + target_distance;
+                    /**
+                     * @brief soma a quantidade ao total
+                     * 
+                     */
+                    const auto path_crosses = crosses + target_crosses;
 
                     EdgeDistance nulldistance = 0;
                     auto &current_distance =
@@ -303,6 +382,12 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                         weights_table[index] = path_weight;
                         durations_table[index] = path_duration;
                         current_distance = path_distance;
+                        /**
+                         * @brief inclui na tabela a quantidade de cruzamentos encontrados
+                         * no caminho para o indice da matriz
+                         * 
+                         */
+                        crosses_table[index] = path_crosses;
                         middle_nodes_table[index] = node;
                     }
 
@@ -326,13 +411,13 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
             // the node (e.g destination is before source on oneway segment) we want to allow
             // node to be visited later in the search along a reachable path.
             // Therefore, we manually run first step of search without marking node as visited.
-            update_values(node, initial_weight, initial_duration, initial_distance);
+            update_values(node, initial_weight, initial_duration, initial_distance, 0);
             relaxBorderEdges<DIRECTION>(
-                facade, node, initial_weight, initial_duration, initial_distance, query_heap, 0);
+                facade, node, initial_weight, initial_duration, initial_distance, 0, query_heap, 0);
         }
         else
         {
-            query_heap.Insert(node, initial_weight, {node, initial_duration, initial_distance});
+            query_heap.Insert(node, initial_weight, {node, initial_duration, initial_distance, 0});
         }
     };
 
@@ -384,20 +469,33 @@ oneToManySearch(SearchEngineData<Algorithm> &engine_working_data,
         const auto heapNode = query_heap.DeleteMinGetHeapNode();
 
         // Update values
-        update_values(
-            heapNode.node, heapNode.weight, heapNode.data.duration, heapNode.data.distance);
+        update_values(heapNode.node,
+                      heapNode.weight,
+                      heapNode.data.duration,
+                      heapNode.data.distance,
+                      heapNode.data.crosses);
 
         // Relax outgoing edges
         relaxOutgoingEdges<DIRECTION>(
             facade, heapNode, query_heap, phantom_nodes, phantom_index, phantom_indices);
     }
 
-    return std::make_pair(std::move(durations_table), std::move(distances_table));
+    /**
+     * @brief Adicionada tabela de cruzamentos ao retorno
+     * 
+     * @return return 
+     */
+    return std::make_pair(std::make_pair(std::move(durations_table), std::move(distances_table)),
+                          std::move(crosses_table));
 }
 
 //
 // Bidirectional multi-layer Dijkstra search for M-to-N matrices
 //
+/**
+ * @brief recebe tabela de cruzamentos
+ * 
+ */
 template <bool DIRECTION>
 void forwardRoutingStep(const DataFacade<Algorithm> &facade,
                         const unsigned row_idx,
@@ -409,7 +507,8 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
                         std::vector<EdgeDuration> &durations_table,
                         std::vector<EdgeDistance> &distances_table,
                         std::vector<NodeID> &middle_nodes_table,
-                        const PhantomNode &phantom_node)
+                        const PhantomNode &phantom_node,
+                        std::vector<int> &crosses_table)
 {
     // Take a copy of the extracted node because otherwise could be modified later if toHeapNode is
     // the same
@@ -427,6 +526,7 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
         const auto target_weight = current_bucket.weight;
         const auto target_duration = current_bucket.duration;
         const auto target_distance = current_bucket.distance;
+        const auto target_crosses = current_bucket.crosses;
 
         // Get the value location in the results tables:
         //  * row-major direct (row_idx, column_idx) index for forward direction
@@ -436,6 +536,7 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
                                   : row_idx + column_idx * number_of_sources;
         auto &current_weight = weights_table[location];
         auto &current_duration = durations_table[location];
+        auto &current_crosses = crosses_table[location];
 
         EdgeDistance nulldistance = 0;
         auto &current_distance = distances_table.empty() ? nulldistance : distances_table[location];
@@ -444,6 +545,11 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
         auto new_weight = heapNode.weight + target_weight;
         auto new_duration = heapNode.data.duration + target_duration;
         auto new_distance = heapNode.data.distance + target_distance;
+        /**
+         * @brief acumula quantidade de cruzamentos do trajeto
+         * 
+         */
+        auto new_crosses = heapNode.data.crosses + target_crosses;
 
         if (new_weight >= 0 && std::tie(new_weight, new_duration, new_distance) <
                                    std::tie(current_weight, current_duration, current_distance))
@@ -451,6 +557,11 @@ void forwardRoutingStep(const DataFacade<Algorithm> &facade,
             current_weight = new_weight;
             current_duration = new_duration;
             current_distance = new_distance;
+            /**
+             * @brief Atribui novo valor ao ponteiro
+             * 
+             */
+            current_crosses = new_crosses;
             middle_nodes_table[location] = heapNode.node;
         }
     }
@@ -476,7 +587,8 @@ void backwardRoutingStep(const DataFacade<Algorithm> &facade,
                                            column_idx,
                                            heapNode.weight,
                                            heapNode.data.duration,
-                                           heapNode.data.distance);
+                                           heapNode.data.distance,
+                                           heapNode.data.crosses);
 
     const auto &partition = facade.GetMultiLevelPartition();
     const auto maximal_level = partition.GetNumberOfLevels() - 1;
@@ -521,7 +633,7 @@ void retrievePackedPathFromSearchSpace(NodeID middle_node_id,
 }
 
 template <bool DIRECTION>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                  const DataFacade<Algorithm> &facade,
                  const std::vector<PhantomNode> &phantom_nodes,
@@ -537,6 +649,7 @@ manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,
     std::vector<EdgeDuration> durations_table(number_of_entries, MAXIMAL_EDGE_DURATION);
     std::vector<EdgeDistance> distances_table(calculate_distance ? number_of_entries : 0,
                                               INVALID_EDGE_DISTANCE);
+    std::vector<int> crosses_table(number_of_entries);
     std::vector<NodeID> middle_nodes_table(number_of_entries, SPECIAL_NODEID);
 
     std::vector<NodeBucket> search_space_with_buckets;
@@ -597,11 +710,15 @@ manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,
                                           durations_table,
                                           distances_table,
                                           middle_nodes_table,
-                                          source_phantom);
+                                          source_phantom,
+                                          crosses_table);
         }
     }
 
-    return std::make_pair(std::move(durations_table), std::move(distances_table));
+    return std::make_pair(std::make_pair(std::move(durations_table), std::move(distances_table)),
+                          std::move(crosses_table));
+    // return std::make_tuple(
+    //     std::move(durations_table), std::move(distances_table), std::move(crosses_table));
 }
 
 } // namespace mld
@@ -619,7 +736,7 @@ manyToManySearch(SearchEngineData<Algorithm> &engine_working_data,
 //   then search is performed on a reversed graph with phantom nodes with flipped roles and
 //   returning a transposed matrix.
 template <>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 manyToManySearch(SearchEngineData<mld::Algorithm> &engine_working_data,
                  const DataFacade<mld::Algorithm> &facade,
                  const std::vector<PhantomNode> &phantom_nodes,

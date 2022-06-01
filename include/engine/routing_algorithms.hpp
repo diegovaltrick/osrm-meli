@@ -30,7 +30,19 @@ class RoutingAlgorithmsInterface
     virtual InternalRouteResult
     DirectShortestPathSearch(const PhantomNodes &phantom_node_pair) const = 0;
 
-    virtual std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+    /**
+     * @brief Alterado o tipo de retorno do método ManyToManySearch para que seja possível
+     * retornar o array de cruzamentos junto com os arrays de duration e distance
+     * 
+     * @param phantom_nodes 
+     * @param source_indices 
+     * @param target_indices 
+     * @param calculate_distance 
+     * @return std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>,
+     * std::vector<int>> 
+     */
+    virtual std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>,
+                      std::vector<int>>
     ManyToManySearch(const std::vector<PhantomNode> &phantom_nodes,
                      const std::vector<std::size_t> &source_indices,
                      const std::vector<std::size_t> &target_indices,
@@ -83,7 +95,19 @@ template <typename Algorithm> class RoutingAlgorithms final : public RoutingAlgo
     InternalRouteResult
     DirectShortestPathSearch(const PhantomNodes &phantom_nodes) const final override;
 
-    virtual std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+    /**
+     * @brief Alterado o tipo de retorno do método ManyToManySearch para que seja possível
+     * retornar o array de cruzamentos junto com os arrays de duration e distance
+     * 
+     * @param phantom_nodes 
+     * @param source_indices 
+     * @param target_indices 
+     * @param calculate_distance 
+     * @return std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>,
+     * std::vector<int>> 
+     */
+    virtual std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>,
+                      std::vector<int>>
     ManyToManySearch(const std::vector<PhantomNode> &phantom_nodes,
                      const std::vector<std::size_t> &source_indices,
                      const std::vector<std::size_t> &target_indices,
@@ -191,8 +215,19 @@ inline routing_algorithms::SubMatchingList RoutingAlgorithms<Algorithm>::MapMatc
                                            allow_splitting);
 }
 
+/**
+ * @brief Alterado o tipo de retorno do método ManyToManySearch para que seja possível
+ * retornar o array de cruzamentos junto com os arrays de duration e distance
+ * 
+ * @tparam Algorithm 
+ * @param phantom_nodes 
+ * @param _source_indices 
+ * @param _target_indices 
+ * @param calculate_distance 
+ * @return std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>> 
+ */
 template <typename Algorithm>
-std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>
+std::pair<std::pair<std::vector<EdgeDuration>, std::vector<EdgeDistance>>, std::vector<int>>
 RoutingAlgorithms<Algorithm>::ManyToManySearch(const std::vector<PhantomNode> &phantom_nodes,
                                                const std::vector<std::size_t> &_source_indices,
                                                const std::vector<std::size_t> &_target_indices,

@@ -216,8 +216,14 @@ Status TripPlugin::HandleRequest(const RoutingAlgorithmsInterface &algorithms,
     BOOST_ASSERT(snapped_phantoms.size() == number_of_locations);
 
     // compute the duration table of all phantom nodes
+    /**
+     * @brief Alterado para que ao chamar o manytomany receba o resultado no formato alterado
+     * Esse caso não é utilizado no processo da matriz, porém, é impactado pela alteração do tipo de resultado
+     * 
+     */
     auto result_duration_table = util::DistTableWrapper<EdgeWeight>(
-        algorithms.ManyToManySearch(snapped_phantoms, {}, {}, /*requestDistance*/ false).first,
+        algorithms.ManyToManySearch(snapped_phantoms, {}, {}, /*requestDistance*/ false)
+            .first.first,
         number_of_locations);
 
     if (result_duration_table.size() == 0)

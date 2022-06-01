@@ -24,6 +24,7 @@ inline void read(storage::tar::FileReader &reader,
     storage::serialization::read(reader, name + "/weights", metric.weights);
     storage::serialization::read(reader, name + "/durations", metric.durations);
     storage::serialization::read(reader, name + "/distances", metric.distances);
+    storage::serialization::read(reader, name + "/crosses", metric.crosses);
 }
 
 template <storage::Ownership Ownership>
@@ -34,6 +35,7 @@ inline void write(storage::tar::FileWriter &writer,
     storage::serialization::write(writer, name + "/weights", metric.weights);
     storage::serialization::write(writer, name + "/durations", metric.durations);
     storage::serialization::write(writer, name + "/distances", metric.distances);
+    storage::serialization::write(writer, name + "/crosses", metric.crosses);
 }
 
 template <typename EdgeDataT, storage::Ownership Ownership>

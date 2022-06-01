@@ -20,10 +20,15 @@ namespace util
 
 struct NodeBasedEdgeData
 {
+    /**
+     * @brief Adiciona a propriedade crosstype ao objeto de base para os nós de intersecção
+     * e adicionado no construtor para inicializar zerado
+     * 
+     */
     NodeBasedEdgeData()
         : weight(INVALID_EDGE_WEIGHT), duration(INVALID_EDGE_WEIGHT),
           distance(INVALID_EDGE_DISTANCE), geometry_id({0, false}), reversed(false),
-          annotation_data(-1)
+          annotation_data(-1), crosstype(0)
     {
     }
 
@@ -35,7 +40,7 @@ struct NodeBasedEdgeData
                       extractor::NodeBasedEdgeClassification flags,
                       AnnotationID annotation_data)
         : weight(weight), duration(duration), distance(distance), geometry_id(geometry_id),
-          reversed(reversed), flags(flags), annotation_data(annotation_data)
+          reversed(reversed), flags(flags), annotation_data(annotation_data), crosstype(0)
     {
     }
 
@@ -46,6 +51,7 @@ struct NodeBasedEdgeData
     bool reversed : 1;
     extractor::NodeBasedEdgeClassification flags;
     AnnotationID annotation_data;
+    int crosstype; // LRQ
 };
 
 // Check if two edge data elements can be compressed into a single edge (i.e. match in terms of
